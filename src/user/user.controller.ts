@@ -1,11 +1,23 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 import { User, Role } from '@prisma/client';
 import { AuthGuard } from '@nestjs/passport';
+import { AuthService } from 'src/auth/auth.service';
 
 @Controller('user')
 export class UserController {
-  constructor(private userService: UserService) {}
+  constructor(
+    private userService: UserService,
+    private authService: AuthService,
+  ) {}
 
   @Get('/:userId')
   @UseGuards(AuthGuard('local'))
@@ -57,5 +69,11 @@ export class UserController {
     } catch (error) {
       throw error;
     }
+  }
+
+  @UseGuards(AuthGuard('local'))
+  @Post('/login')
+  async login(@Request() req): Promise<any> {
+    return this.authService.login(req.user);
   }
 }
