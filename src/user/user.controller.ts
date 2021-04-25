@@ -9,8 +9,9 @@ import {
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { User, Role } from '@prisma/client';
-import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from 'src/auth/auth.service';
+import { JwtAuthGuard } from 'src/auth/gard/jwt-auth.guard';
+import { LocalAuthGuard } from 'src/auth/gard/local-auth.gard';
 
 @Controller('user')
 export class UserController {
@@ -19,17 +20,19 @@ export class UserController {
     private authService: AuthService,
   ) {}
 
-  @Get('/:userId')
-  @UseGuards(AuthGuard('local'))
-  async getUser(@Param('userId') userId: number) {
+  @Get()
+  @UseGuards(JwtAuthGuard)
+  async getUser(@Request() req) {
     try {
-      const user = await this.userService.user({ userId: Number(userId) });
+      const { password, ...user } = await this.userService.user({
+        userId: Number(req.user.userId),
+      });
 
       return user
         ? { data: user }
-        : { message: `User Id ${userId} not found.` };
+        : { message: `User Id ${req.user.userId} not found.` };
     } catch (error) {
-      throw new Error();
+      return { message: error.message };
     }
   }
 
@@ -71,9 +74,13 @@ export class UserController {
     }
   }
 
-  @UseGuards(AuthGuard('local'))
+  @UseGuards(LocalAuthGuard)
   @Post('/login')
   async login(@Request() req): Promise<any> {
-    return this.authService.login(req.user);
+    try {
+      return this.authService.login(req.user);
+    } catch (error) {
+      return { message: error.message };
+    }
   }
 }

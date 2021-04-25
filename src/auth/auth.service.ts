@@ -20,7 +20,11 @@ export class AuthService {
   }
 
   async login(user: any): Promise<any> {
-    const playload = { email: user.email, userId: user.userId };
+    const playload = {
+      email: user.email,
+      userId: user.userId,
+      role: user.role,
+    };
     return {
       access_token: this.jwtService.sign(playload),
     };
